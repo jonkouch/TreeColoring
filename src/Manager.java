@@ -1,10 +1,12 @@
 import java.io.File;
-import java.util.Scanner;
+import java.util.*;
 
 public class Manager {
     private Node nodes[];
     static final String DIR_PATH = "inputFiles/";
     private int currNodes;
+    private Map<Integer, Integer> nodeColors = new HashMap<>(); // A map to store Node ID - Color pairs
+    private List<Thread> nodeThreads = new ArrayList<>(); // A list to store Node threads
 
 
     public Manager() {
@@ -25,7 +27,10 @@ public class Manager {
                 index++;
             }
         }
-        nodes[currNodes++] = new Node(id, numNodes, maxDeg, neighbors);
+        nodes[currNodes] = new Node(id, numNodes, maxDeg, neighbors, this);
+        nodeThreads.add(new Thread(nodes[currNodes])); // Add new Node's thread to the list
+        currNodes++;
+
     }
 
 
@@ -36,6 +41,7 @@ public class Manager {
             int maxDeg = Integer.parseInt(scannerInput.next());
             nodes = new Node[numNodes];
 
+            scannerInput.nextLine();
             while (scannerInput.hasNextLine()){
                 String row = scannerInput.nextLine();
                 processRow(row, numNodes, maxDeg);
@@ -46,13 +52,34 @@ public class Manager {
     }
 
     public String start() {
-        // your code here
-        return "coloring massage in output format";
+        for(Thread t : nodeThreads) {
+            t.start();
+        }
 
+        for(Thread t : nodeThreads){
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return printColors(); // Print the colors when all nodes have finished
+    }
+
+    public void terminateNode(int id, int color) {
+        nodeColors.put(id, color); // Update nodeColors map when a node terminates
     }
 
     public String terminate() {
-        // your code here
-        return "coloring massage in output format";
+        return printColors();
+    }
+
+    private String printColors() {
+        StringBuilder output = new StringBuilder();
+        for(Map.Entry<Integer, Integer> entry : nodeColors.entrySet()) {
+            output.append(entry.getKey()).append(",").append(entry.getValue()).append("\n");
+        }
+        return output.toString();
     }
 }
