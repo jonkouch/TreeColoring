@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Main {
@@ -8,7 +7,7 @@ public class Main {
 
 
     static final String DIR_PATH = "inputFiles/";
-    static final String[] FILES = {"input1.txt"};
+    static final String[] FILES = {"input1.txt", "input2.txt"};
 
 
     public static void main(String[] args) {
