@@ -7,7 +7,7 @@ public class Manager {
     private int currNodes;
     private Map<Integer, Integer> nodeColors = new HashMap<>(); // A map to store Node ID - Color pairs
     private List<Thread> nodeThreads = new ArrayList<>(); // A list to store Node threads
-
+    private static final int UNDECIDED = -1;
 
     public Manager() {
         currNodes = 0;
@@ -66,6 +66,24 @@ public class Manager {
 
         return printColors(); // Print the colors when all nodes have finished
     }
+
+
+    public void sendMessage(int nodeId, String message) {
+        Node node = getNodeById(nodeId);
+        if (node != null) {
+            node.processMessage(message);
+        }
+    }
+
+    private Node getNodeById(int nodeId) {
+        for (Node node : nodes) {
+            if (node.getId() == nodeId) {
+                return node;
+            }
+        }
+        return null;
+    }
+
 
     public void terminateNode(int id, int color) {
         nodeColors.put(id, color); // Update nodeColors map when a node terminates

@@ -35,11 +35,18 @@ public class Node implements Runnable {
             messageNeighbors(id + " " + color);
         } else {
             while (color == -1) {
-                readMessages();
                 if (!checkNeighbors()) {
                     color = findMinColor();
                     messageNeighbors(id + " " + color);
                     stop();
+                }
+                try {
+                    Thread.sleep(1); // sleep for 1 milliseconds
+                } catch (InterruptedException e) {
+                    // If we've been interrupted, it might be because we were told to stop
+                    if (Thread.currentThread().isInterrupted()) {
+                        return;
+                    }
                 }
             }
         }
@@ -47,85 +54,38 @@ public class Node implements Runnable {
 
 
     /**
-     * Send a message to a neighbor node given the writing socket for the given node.
-     *
-     * @param socketNumber: The writing socket for the given node.
-     * @param message:      The message to send.
-     */
-    private void sendMessage(int socketNumber, String message) {
-        try {
-            Socket socket = new Socket("localhost", socketNumber);
-            PrintWriter writer = new PrintWriter(socket.getOutputStream());
-            writer.println(message);
-            writer.flush();
-            writer.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Send a message to all active neighbors.
-     *
      * @param message: The message to send.
      */
     private void messageNeighbors(String message) {
         for (int i = 0; i < activeNeighbors.size(); i++) {
-            int socketNumber = activeNeighbors.get(i)[1];
-            sendMessage(socketNumber, message);
+            int neighborId = activeNeighbors.get(i)[0];
+            manager.sendMessage(neighborId, message);
         }
     }
 
-
-    /**
-     * Reads all current pending messages and updates activeNeighbors and neighborState accordingly.
-     */
-    private void readMessages() {
-        for (int i = 0; i < activeNeighbors.size(); i++) {
-            int[] neighbor = activeNeighbors.get(i);
-            int neighborId = neighbor[0];
-            int readingPort = neighbor[2];
-
-            try {
-                // Create a socket and connect to the neighbor's reading port
-                Socket socket = new Socket("localhost", readingPort);
-
-                // Get the input stream from the socket
-                InputStream inputStream = socket.getInputStream();
-
-                // Read the message from the input stream
-                byte[] buffer = new byte[1024]; // Adjust the buffer size as needed
-                int bytesRead = inputStream.read(buffer);
-                String message = new String(buffer, 0, bytesRead);
-
-                // Process the message and update activeNeighbors and neighborState accordingly
-                if(message.compareTo("")!=0)
-                    processMessage(message);
-
-                // Close the socket and input stream
-                socket.close();
-                inputStream.close();
-            } catch (IOException e) {
-                // Handle any exceptions that occur during socket operations
-                e.printStackTrace();
-            }
-
-        }
-    }
 
     /**
      * Process the received message and update neighbor state accordingly.
      *
      * @param message The received message.
      */
-    private void processMessage(String message) {
+    public void processMessage(String message) {
         String[] parts = message.split(" ");
 
         int senderId = Integer.parseInt(parts[0]);
         int color = Integer.parseInt(parts[1]);
         neighborState.put(senderId, color);
-        activeNeighbors.remove(senderId);
+        usedColors.add(color);
+
+        // Find the index of the neighbor's ID in activeNeighbors and remove it
+        for (int i = 0; i < activeNeighbors.size(); i++) {
+            int[] neighbor = activeNeighbors.get(i);
+            if (neighbor[0] == senderId) {
+                activeNeighbors.remove(i);
+                break;
+            }
+        }
     }
 
 
@@ -165,4 +125,9 @@ public class Node implements Runnable {
         manager.terminateNode(id, color); // Pass id and color to the Manager's terminate method
         Thread.currentThread().interrupt(); // End the thread
     }
+
+    public int getId(){return id;}
+
+    public int getColor(){return color;}
+
 }
