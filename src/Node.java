@@ -13,9 +13,10 @@ public class Node implements Runnable {
     private Map<Integer, ServerSocket> serverSockets = new HashMap<>();
     static final int UNDECIDED_VALUE = -1;
     private Manager manager;
+    private Map<Integer, Thread> neighborThreads = new HashMap<>();
 
 
-    public Node(int id, int numNodes, int maxDeg, int[][] neighbors, Manager manager) {
+    public Node(int id, int numNodes, int maxDeg, int[][] neighbors, Manager manager) throws IOException {
         this.id = id;
         color = -1;
         this.numNodes = numNodes;
@@ -33,8 +34,8 @@ public class Node implements Runnable {
                 ServerSocket serverSocket = new ServerSocket(neighbors[i][2]);
                 serverSockets.put(neighborId, serverSocket);
                 // Start a thread to listen for incoming connections from this neighbor
-                new Thread(() -> {
-                    while (true) {
+                Thread neighborThread = new Thread(() -> {
+                    while (!Thread.currentThread().isInterrupted()) {
                         try {
                             Socket socket = serverSocket.accept();
                             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -43,9 +44,15 @@ public class Node implements Runnable {
                             socket.close();
                         } catch (IOException e) {
                             e.printStackTrace();
+                            if (Thread.currentThread().isInterrupted()) {
+                                // break out of the loop if the thread is interrupted
+                                break;
+                            }
                         }
                     }
-                }).start();
+                });
+                neighborThread.start();
+                neighborThreads.put(neighborId, neighborThread);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -57,25 +64,27 @@ public class Node implements Runnable {
      * Implements the pseudocode of the asynchronous "Reduce" algorithm learned in the homework.
      */
     public void run() {
-        if (!checkNeighbors()) {
-            color = findMinColor();
-            messageNeighbors(id + " " + color);
-            stop();
-        } else {
-            while (color == -1) {
-                if (!checkNeighbors()) {
-                    color = findMinColor();
-                    messageNeighbors(id + " " + color);
-                    stop();
-                }
-                try {
-                    Thread.sleep(1); // sleep for 1 milliseconds
-                } catch (InterruptedException e) {
-                    // If we've been interrupted, it might be because we were told to stop
-                    if (Thread.currentThread().isInterrupted()) {
-                        return;
+        while (!Thread.currentThread().isInterrupted()) {
+            if (!checkNeighbors()) {
+                color = findMinColor();
+                messageNeighbors(id + " " + color);
+                stop();
+            } else {
+                while (color == -1) {
+                    if (!checkNeighbors()) {
+                        color = findMinColor();
+                        messageNeighbors(id + " " + color);
+                        stop();
+                    }
+                    try {
+                        Thread.sleep(1); // sleep for 1 milliseconds
+                    } catch (InterruptedException e) {
                     }
                 }
+            }
+            if (Thread.currentThread().isInterrupted()) {
+                // break out of the loop if the thread is interrupted
+                break;
             }
         }
     }
@@ -120,7 +129,11 @@ public class Node implements Runnable {
                 break;
             }
         }
-        Thread.currentThread().interrupt(); // End the thread
+        // Interrupt the thread handling this neighbor
+        Thread senderThread = neighborThreads.get(senderId);
+        if(senderThread != null) {
+            senderThread.interrupt();
+        }
     }
 
 

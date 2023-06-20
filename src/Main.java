@@ -1,10 +1,10 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Main {
     static final String TERMINATED = "terminated by time";
     static final String FAILED = "termination failed";
-
 
     static final String DIR_PATH = "inputFiles/";
     static final String[] FILES = {"input1.txt", "input2.txt"};
@@ -58,5 +58,8 @@ public class Main {
         terminateThread.start();
         failedThread.start();
     }
+
+
+
 }
 

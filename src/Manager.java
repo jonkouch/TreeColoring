@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class Manager {
@@ -12,7 +13,7 @@ public class Manager {
         currNodes = 0;
     }
 
-    public void processRow(String row, int numNodes, int maxDeg){
+    public void processRow(String row, int numNodes, int maxDeg) throws IOException {
         String[] parts = row.split("\\s+", 2);
         int id = Integer.parseInt(parts[0]);
         String arrayPart = parts[1].replaceAll("\\[|\\]", "");
@@ -62,6 +63,7 @@ public class Manager {
                 e.printStackTrace();
             }
         }
+
 
         return printColors(); // Print the colors when all nodes have finished
     }
