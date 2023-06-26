@@ -7,7 +7,7 @@ public class Main {
     static final String FAILED = "termination failed";
 
     static final String DIR_PATH = "inputFiles/";
-    static final String[] FILES = {"input1.txt", "input2.txt"};
+    static final String[] FILES = {"tinyinput2.txt"};
 
 
     public static void main(String[] args) {

@@ -43,7 +43,7 @@ public class Node implements Runnable {
                             processMessage(message);
                             socket.close();
                         } catch (IOException e) {
-                            e.printStackTrace();
+//                            e.printStackTrace();
                             if (Thread.currentThread().isInterrupted()) {
                                 // break out of the loop if the thread is interrupted
                                 break;
@@ -54,7 +54,7 @@ public class Node implements Runnable {
                 neighborThread.start();
                 neighborThreads.put(neighborId, neighborThread);
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
     }
@@ -64,28 +64,25 @@ public class Node implements Runnable {
      * Implements the pseudocode of the asynchronous "Reduce" algorithm learned in the homework.
      */
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            if (!checkNeighbors()) {
-                color = findMinColor();
-                messageNeighbors(id + " " + color);
-                stop();
-            } else {
-                while (color == -1) {
-                    if (!checkNeighbors()) {
-                        color = findMinColor();
-                        messageNeighbors(id + " " + color);
-                        stop();
-                    }
-                    try {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                if (!checkNeighbors()) {
+                    color = findMinColor();
+                    messageNeighbors(id + " " + color);
+                    stop();
+                } else {
+                    while (color == -1) {
+                        if (!checkNeighbors()) {
+                            color = findMinColor();
+                            messageNeighbors(id + " " + color);
+                            stop();
+                        }
                         Thread.sleep(1); // sleep for 1 milliseconds
-                    } catch (InterruptedException e) {
                     }
                 }
             }
-            if (Thread.currentThread().isInterrupted()) {
-                // break out of the loop if the thread is interrupted
-                break;
-            }
+        } catch (InterruptedException e) {
+            // Handling InterruptedException properly
         }
     }
 
@@ -103,9 +100,11 @@ public class Node implements Runnable {
                 writer.println(message);
                 socket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
+        Thread curThread = Thread.currentThread();
+        curThread.interrupt();
     }
 
 
@@ -132,6 +131,14 @@ public class Node implements Runnable {
         // Interrupt the thread handling this neighbor
         Thread senderThread = neighborThreads.get(senderId);
         if(senderThread != null) {
+            ServerSocket serverSocket = serverSockets.get(senderId);
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();  // Close ServerSocket which will force SocketException on accept()
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             senderThread.interrupt();
         }
     }
@@ -171,6 +178,17 @@ public class Node implements Runnable {
      */
     private void stop() {
         manager.terminateNode(id, color); // Pass id and color to the Manager's terminate method
-        Thread.currentThread().interrupt(); // End the thread
+        for(Map.Entry<Integer, Thread> entry : neighborThreads.entrySet()) {
+            ServerSocket serverSocket = serverSockets.get(entry.getKey());
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();  // Close ServerSocket which will force SocketException on accept()
+                } catch (IOException e) {
+//                    e.printStackTrace();
+                }
+            }
+            entry.getValue().interrupt();
+        }
+        Thread.currentThread().interrupt();
     }
 }
