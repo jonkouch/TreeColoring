@@ -136,7 +136,7 @@ public class Node implements Runnable {
                 try {
                     serverSocket.close();  // Close ServerSocket which will force SocketException on accept()
                 } catch (IOException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
             senderThread.interrupt();
