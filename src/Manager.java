@@ -49,7 +49,7 @@ public class Manager {
      */
     public void readInput(String path) {
         try {
-            Scanner scannerInput = new Scanner(new File(DIR_PATH + path));
+            Scanner scannerInput = new Scanner(new File(path));
             int numNodes = Integer.parseInt(scannerInput.next());
             int maxDeg = Integer.parseInt(scannerInput.next());
             nodes = new Node[numNodes];
@@ -60,7 +60,7 @@ public class Manager {
                 processRow(row, numNodes, maxDeg);
             }
         } catch (Exception e){
-//            e.printStackTrace();
+            e.printStackTrace();
         }
     }
 

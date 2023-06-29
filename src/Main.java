@@ -7,7 +7,10 @@ public class Main {
     static final String FAILED = "termination failed";
 
     static final String DIR_PATH = "inputFiles/";
-    static final String[] FILES = {"tinyinput2.txt"};
+    static final String[] FILES = {"input1.txt", "input2.txt", "tinyinput1.txt",
+            "tinyinput2.txt", "tinyinput3.txt", "smallinput1.txt",
+            "smallinput2.txt", "smallinput3.txt", "mediuminput1.txt", "mediuminput2.txt",
+            "mediuminput3.txt"};
 
 
     public static void main(String[] args) {
@@ -17,19 +20,20 @@ public class Main {
                 int numNodes = Integer.parseInt(scannerInput.next());
                 Manager m = new Manager();
 
-                Thread startThread = new Thread(() -> startManager(m, path));
+                Thread startThread = new Thread(() -> startManager(m, DIR_PATH + path));
                 Thread terminateThread = new Thread(() -> {
                     try {
                         Thread.sleep(numNodes * 5 * 1000L);
+                        System.out.println(TERMINATED);
+                        endManager(m, numNodes);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    System.out.println(TERMINATED);
-                    endManager(m, numNodes);
                 });
 
                 startThread.start();
                 terminateThread.start();
+                terminateThread.join();
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -44,7 +48,7 @@ public class Main {
         System.out.println(coloringOutput +"\nElapsed Time in milli seconds: "+ (endTime-startTime));
     }
 
-    private static void endManager(Manager m, int numNodes) {
+    private static void endManager(Manager m, int numNodes) throws InterruptedException {
         Thread terminateThread = new Thread(() -> System.out.println(m.terminate()));
         Thread failedThread = new Thread(() -> {
             try {
@@ -57,6 +61,7 @@ public class Main {
 
         terminateThread.start();
         failedThread.start();
+        failedThread.join();
     }
 
 
